@@ -1,11 +1,13 @@
 import ReduxedStorage from './ReduxedStorage';
 import WrappedChromeStorage from './WrappedChromeStorage';
 import WrappedBrowserStorage from './WrappedBrowserStorage';
-import { StoreCreator, StoreEnhancer, Reducer } from 'redux';
+import { StoreEnhancer, Reducer, ReducersMapObject } from 'redux';
 import { ExtendedStore } from './types/store';
 import {
   ChromeNamespace, BrowserNamespace, StorageAreaName
 } from './types/apis';
+
+type ReduxReducer = Reducer | ReducersMapObject
 
 enum Namespace {
   chrome = 'chrome',
@@ -17,12 +19,12 @@ declare const browser: BrowserNamespace;
 /**
  * ReduxedChromeStorage creator factory.
  * Returns an async store creator that's supposed to replace
- * the original Redux's createStore function.
- * Unlike the original createStore() that immediately returns a store,
+ * the Redux Toolkit's configureStore function.
+ * Unlike the original configureStore() that immediately returns a store,
  * async store creator returns a Promise to be resolved
  * when the created store is ready
  * @param obj
- * @param obj.createStore the original Redux's createStore function.
+ * @param obj.configureStore the Redux Toolkit's configureStore function.
  * The only mandatory parameter/property
  * @param obj.namespace string to identify the APIs namespace to be used,
  * either 'chrome' or 'browser'.
@@ -41,14 +43,14 @@ declare const browser: BrowserNamespace;
  * in chrome.storage, defaults to 'reduxed'
  * @param obj.bufferLife lifetime of the bulk actions buffer (in ms),
  * defaults to 100
- * @returns an async store creator to replace the original createStore function
+ * @returns an async store creator to replace the original configureStore function
  */
 export default function reduxedStorageCreatorFactory({
-  createStore,
+  configureStore,
   namespace, chromeNs, browserNs,
   storageArea, storageKey, bufferLife
 }: {
-  createStore: StoreCreator,
+  configureStore: any,
   namespace?: Namespace,
   chromeNs?: ChromeNamespace,
   browserNs?: BrowserNamespace,
@@ -56,33 +58,33 @@ export default function reduxedStorageCreatorFactory({
   storageKey?: string,
   bufferLife?: number
 }) {
-  if (typeof createStore !== 'function')
-    throw new Error(`Missing 'createStore' parameter/property`);
+  if (typeof configureStore !== 'function')
+    throw new Error(`Missing 'configureStore' parameter/property`);
 
   const storage = browserNs || namespace === Namespace.browser?
     new WrappedBrowserStorage({
       namespace: browserNs || browser, area: storageArea, key: storageKey
-    }) : 
+    }) :
     new WrappedChromeStorage({
       namespace: chromeNs || chrome, area: storageArea, key: storageKey
     });
   storage.init();
 
   function asyncStoreCreator(
-    reducer: Reducer,
+    reducer: ReduxReducer,
     enhancer?: StoreEnhancer
   ): Promise<ExtendedStore>
   function asyncStoreCreator(
-    reducer: Reducer,
+    reducer: ReduxReducer,
     initialState?: any,
     enhancer?: StoreEnhancer
   ): Promise<ExtendedStore>
   function asyncStoreCreator(
-    reducer: Reducer,
+    reducer: ReduxReducer,
     initialState?: any | StoreEnhancer,
     enhancer?: StoreEnhancer
   ): Promise<ExtendedStore> {
-    if (typeof reducer !== 'function')
+    if (typeof reducer !== 'object')
       throw new Error(`Missing 'reducer' parameter`);
     if (typeof initialState === 'function' && typeof enhancer === 'function')
       throw new Error(`Multiple 'enhancer' parameters unallowed`);
@@ -91,7 +93,7 @@ export default function reduxedStorageCreatorFactory({
       initialState = undefined
     }
     const store = new ReduxedStorage({
-      createStore, storage, bufferLife,
+      configureStore, storage, bufferLife,
       reducer, initialState, enhancer
     });
     return store.init();
