@@ -54,8 +54,9 @@
     "prebuild": "npm run lint",
     "build": "rollup -c",
     "dev": "rollup -c -w",
-    "lint": "eslint src --ext .ts",
-    "lint:test": "eslint test --ext .ts",
+    "prepare": "npm run build",
+    "lint": "eslint src --ext .ts --config .eslintrc",
+    "lint:test": "eslint test --ext .ts --config .eslintrc",
     "pretest": "npm run lint:test",
     "test": "ts-mocha -p test/tsconfig.json test/*.ts",
     "prepublishOnly": "npm run build"
