@@ -51,7 +51,6 @@
     "@typescript-eslint/parser": "^4"
   },
   "scripts": {
-    "prebuild": "npm run lint",
     "build": "rollup -c",
     "dev": "rollup -c -w",
     "prepare": "npm run build",
