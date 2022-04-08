@@ -84,7 +84,7 @@ export default function reduxedStorageCreatorFactory({
     initialState?: any | StoreEnhancer,
     enhancer?: StoreEnhancer
   ): Promise<ExtendedStore> {
-    if (typeof reducer !== 'object')
+    if (typeof reducer !== 'function')
       throw new Error(`Missing 'reducer' parameter`);
     if (typeof initialState === 'function' && typeof enhancer === 'function')
       throw new Error(`Multiple 'enhancer' parameters unallowed`);
